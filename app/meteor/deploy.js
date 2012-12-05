@@ -105,15 +105,16 @@ var bundle_and_deploy = function (site, app_dir, opt_debug, opt_tests,
     }
 
     process.stdout.write('done.\n');
-    process.stdout.write('Now serving at ' + site + '\n');
-
+    var hostname = require('url').parse(body).hostname;
+    process.stdout.write('Now serving at ' + hostname + '\n');
     files.rm_recursive(build_dir);
 
-    if (!site.match('meteor.com')) {
+
+    if (hostname && !hostname.match(/meteor\.com$/)) {
       var dns = require('dns');
-      dns.resolve(site, 'CNAME', function (err, cnames) {
+      dns.resolve(hostname, 'CNAME', function (err, cnames) {
         if (err || cnames[0] !== 'origin.meteor.com') {
-          dns.resolve(site, 'A', function (err, addresses) {
+          dns.resolve(hostname, 'A', function (err, addresses) {
             if (err || addresses[0] !== '107.22.210.133') {
               process.stdout.write('-------------\n');
               process.stdout.write("You've deployed to a custom domain.\n");
@@ -206,9 +207,6 @@ var parse_url = function (url) {
   var parsed = require('url').parse(url);
 
   delete parsed.host; // we use hostname
-
-  if (parsed.hostname && !parsed.hostname.match(/\./))
-    parsed.hostname += '.meteor.com';
 
   if (!parsed.hostname) {
     process.stdout.write(
